@@ -1,43 +1,36 @@
 package com.example.foodhub_app
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.navigation.compose.rememberNavController
+import com.example.foodhub_app.navigation.AppNavGraph
 import com.example.foodhub_app.ui.theme.Foodhub_AppTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private var pendingDeepLink by mutableStateOf<Uri?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        pendingDeepLink = intent?.data
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             Foodhub_AppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android", modifier = Modifier.padding(innerPadding))
-                }
+                val navController = rememberNavController()
+                AppNavGraph(
+                    navController = navController,
+                    deepLinkUri = pendingDeepLink,
+                    onDeepLinkConsumed = { pendingDeepLink = null }
+                )
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!", modifier = modifier)
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    Foodhub_AppTheme {
-        Greeting("Android")
-    }
-}
