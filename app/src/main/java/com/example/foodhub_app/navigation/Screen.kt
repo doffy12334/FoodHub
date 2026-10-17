@@ -35,6 +35,9 @@ sealed interface Screen {
     data object Orders : Screen
 
     @Serializable
+    data object Menu : Screen
+
+    @Serializable
     data class FoodDetail(val foodId: String) : Screen
 
     @Serializable

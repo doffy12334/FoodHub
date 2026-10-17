@@ -48,7 +48,7 @@ class SplashViewModel @Inject constructor(
                     _destination.value = SplashDestination.Home
                 }
             }.onFailure {
-                _destination.value = SplashDestination.Login
+                _destination.value = SplashDestination.Home // Chế độ guest không cần login
             }
         }
     }

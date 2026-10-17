@@ -14,7 +14,10 @@ fun FoodDto.toMenuFood(): MenuFood {
         rating = avgRating,
         isFeatured = isFeatured,
         totalOrder = totalOrder,
-        available = isAvailable
+        available = isAvailable,
+        basePrice = basePrice.toDoubleOrNull()?.toLong() ?: priceLong,
+        salePercent = salePercent,
+        isBestSeller = isBestSeller,
     )
 }
 
