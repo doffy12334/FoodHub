@@ -15,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.foodhub_app.feature.customer.menu.ui.MenuRoute
+import com.example.foodhub_app.feature.customer.home.ui.HomeRoute
 import com.example.foodhub_app.feature.customer.splash.ui.SplashRoute
 import com.example.foodhub_app.feature.shared.auth.ui.LoginRoute
 import com.example.foodhub_app.feature.shared.auth.ui.RegisterRoute
@@ -86,7 +87,7 @@ fun AppNavGraph(
                     }
                 },
                 onNavigateToLogin = {
-                    navController.navigate(Screen.Login){
+                    navController.navigate(Screen.Home){
                         popUpTo(Screen.Splash){
                             inclusive = true
                         }
@@ -178,16 +179,24 @@ fun AppNavGraph(
 
         // Màn hình Trang chủ Khách hàng (Home / Menu)
         composable<Screen.Home> {
+            HomeRoute(
+                onFoodClick = { Toast.makeText(context, "Chi tiết món chưa được triển khai", Toast.LENGTH_SHORT).show() },
+                onMenuClick = { navController.navigate(Screen.Menu) },
+                onCartClick = { Toast.makeText(context, "Giỏ hàng chưa được triển khai", Toast.LENGTH_SHORT).show() },
+                onOrdersClick = { Toast.makeText(context, "Đơn hàng chưa được triển khai", Toast.LENGTH_SHORT).show() },
+                onProfileClick = { Toast.makeText(context, "Hồ sơ chưa được triển khai", Toast.LENGTH_SHORT).show() },
+                onLoginClick = { navController.navigate(Screen.Login) },
+                onQrClick = { Toast.makeText(context, "Quét QR chưa được triển khai", Toast.LENGTH_SHORT).show() },
+                onChatClick = { Toast.makeText(context, "Tin nhắn chưa được triển khai", Toast.LENGTH_SHORT).show() },
+                onNotificationsClick = { Toast.makeText(context, "Thông báo chưa được triển khai", Toast.LENGTH_SHORT).show() },
+            )
+        }
+
+        composable<Screen.Menu> {
             MenuRoute(
-                onFoodClick = { foodId ->
-                    navController.navigate(Screen.FoodDetail(foodId))
-                },
-                onBackClick = {
-                    navController.popBackStack()
-                },
-                onCartClick = {
-                    navController.navigate(Screen.Cart)
-                }
+                onFoodClick = { Toast.makeText(context, "Chi tiết món chưa được triển khai", Toast.LENGTH_SHORT).show() },
+                onBackClick = { navController.popBackStack() },
+                onCartClick = { Toast.makeText(context, "Giỏ hàng chưa được triển khai", Toast.LENGTH_SHORT).show() },
             )
         }
 

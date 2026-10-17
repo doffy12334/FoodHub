@@ -11,7 +11,10 @@ data class MenuFood(
     val rating: String = "0",
     val isFeatured: Boolean = false,
     val totalOrder: Int = 0,
-    val available: Boolean = true
+    val available: Boolean = true,
+    val basePrice: Long = price,
+    val salePercent: Double? = null,
+    val isBestSeller: Boolean = false,
 )
 
 data class MenuCategory(
