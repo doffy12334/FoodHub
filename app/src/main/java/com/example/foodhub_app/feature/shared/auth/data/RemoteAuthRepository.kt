@@ -57,4 +57,26 @@ class RemoteAuthRepository @Inject constructor(
             userDto
         }
     }
+
+
+    suspend fun checkSession() : Result<UserDto>{
+        return runCatching{
+            val accessToken = tokenStore.getAccessToken()
+            if (accessToken.isNullOrBlank()){
+                throw Exception("Chưa có token đăng nhập")
+            }
+            val userResponse = authApi.getUser("Bearer $accessToken")
+            val userDto = userResponse.data ?: throw Exception("Phiên đăng nhập đã hết hạn")
+            val refreshToken = tokenStore.getRefreshToken()
+            tokenStore.saveToken(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                userDto = userDto
+            )
+            userDto
+        }
+            .onFailure {
+                tokenStore.clearSession()
+            }
+    }
 }

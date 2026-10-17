@@ -15,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.foodhub_app.feature.customer.menu.ui.MenuRoute
+import com.example.foodhub_app.feature.customer.splash.ui.SplashRoute
 import com.example.foodhub_app.feature.shared.auth.ui.LoginRoute
 import com.example.foodhub_app.feature.shared.auth.ui.RegisterRoute
 
@@ -22,7 +23,7 @@ import com.example.foodhub_app.feature.shared.auth.ui.RegisterRoute
 fun AppNavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: Screen = Screen.Login,
+    startDestination: Screen = Screen.Splash,
     deepLinkUri: Uri? = null,
     onDeepLinkConsumed: () -> Unit = {}
 ) {
@@ -65,6 +66,36 @@ fun AppNavGraph(
             ) + fadeOut(animationSpec = tween(durationMillis = 300))
         }
     ) {
+        //Màn hình Splash
+        composable<Screen.Splash> {
+            SplashRoute(
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home){
+                        popUpTo(Screen.Splash) {
+                           inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToAdmin = {
+                    navController.navigate(Screen.Admin){
+                        popUpTo(Screen.Splash){
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login){
+                        popUpTo(Screen.Splash){
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
 
         // Màn hình Đăng nhập
         composable<Screen.Login> {
@@ -135,12 +166,14 @@ fun AppNavGraph(
 
         // Màn hình Quên mật khẩu
         composable<Screen.ForgotPassword> {
-            Toast.makeText(context, "Màn hình Quên mật khẩu", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Màn hình Quên mật khẩu", Toast.LENGTH_SHORT)
+                .show()
         }
 
         // Màn hình Quét QR Khách hàng
         composable<Screen.QrScan> {
-            Toast.makeText(context, "Màn hình Quét mã QR", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Màn hình Quét mã QR", Toast.LENGTH_SHORT)
+                .show()
         }
 
         // Màn hình Trang chủ Khách hàng (Home / Menu)
@@ -160,17 +193,20 @@ fun AppNavGraph(
 
         // Màn hình Giỏ hàng
         composable<Screen.Cart> {
-            Toast.makeText(context, "Màn hình Giỏ hàng", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Màn hình Giỏ hàng", Toast.LENGTH_SHORT)
+                .show()
         }
 
         // Màn hình Chi tiết Món ăn
         composable<Screen.FoodDetail> {
-            Toast.makeText(context, "Màn hình Chi tiết món ăn", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Màn hình Chi tiết món ăn", Toast.LENGTH_SHORT)
+                .show()
         }
 
         // Màn hình Admin (Admin Dashboard)
         composable<Screen.Admin> {
-            Toast.makeText(context, "Màn hình Quản trị Admin", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Màn hình Quản trị Admin", Toast.LENGTH_LONG)
+                .show()
         }
     }
 }
