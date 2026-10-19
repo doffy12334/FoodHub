@@ -3,6 +3,7 @@ package com.example.foodhub_app.feature.shared.auth.data
 import com.example.foodhub_app.core.network.ApiResponse
 import com.example.foodhub_app.feature.shared.auth.model.AuthData
 import com.example.foodhub_app.feature.shared.auth.model.LoginRequest
+import com.example.foodhub_app.feature.shared.auth.model.RefreshTokenRequest
 import com.example.foodhub_app.feature.shared.auth.model.RegisterRequest
 import com.example.foodhub_app.feature.shared.auth.model.UserDto
 import okhttp3.RequestBody
@@ -22,4 +23,9 @@ interface AuthApi {
     suspend fun getUser(
         @Header("Authorization") token: String
     ): ApiResponse<UserDto>
+
+    @POST("user/refresh-token")
+    suspend fun refreshToken(
+        @Body request: RefreshTokenRequest
+    ): ApiResponse<AuthData>
 }

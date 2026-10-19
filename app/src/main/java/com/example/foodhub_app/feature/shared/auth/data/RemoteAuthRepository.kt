@@ -4,6 +4,7 @@ import com.example.foodhub_app.core.datastore.TokenStore
 import com.example.foodhub_app.core.network.ApiResponse
 import com.example.foodhub_app.feature.shared.auth.model.AuthData
 import com.example.foodhub_app.feature.shared.auth.model.LoginRequest
+import com.example.foodhub_app.feature.shared.auth.model.RefreshTokenRequest
 import com.example.foodhub_app.feature.shared.auth.model.RegisterRequest
 import com.example.foodhub_app.feature.shared.auth.model.UserDto
 import javax.inject.Inject
@@ -42,7 +43,7 @@ class RemoteAuthRepository @Inject constructor(
         return runCatching {
             //Gọi Api đăng ký , nhận về token
             val registerResponse = authApi.register(
-                RegisterRequest(email, password, phone, name, confirmPassword = password ))
+                RegisterRequest(email, password, phone, name, confirmPassword = password))
             val authData = registerResponse.data ?: throw Exception("Không nhận được token")
             //Dùng access token lấy thông tin user
             val userResponse = authApi.getUser("Bearer ${authData.accessToken}")
@@ -59,24 +60,59 @@ class RemoteAuthRepository @Inject constructor(
     }
 
 
-    suspend fun checkSession() : Result<UserDto>{
-        return runCatching{
-            val accessToken = tokenStore.getAccessToken()
-            if (accessToken.isNullOrBlank()){
+    suspend fun checkSession(): Result<UserDto> {
+        return runCatching {
+            var accessToken = tokenStore.getAccessToken()
+            val refreshToken = tokenStore.getRefreshToken()
+
+            if (accessToken.isNullOrBlank()) {
                 throw Exception("Chưa có token đăng nhập")
             }
-            val userResponse = authApi.getUser("Bearer $accessToken")
-            val userDto = userResponse.data ?: throw Exception("Phiên đăng nhập đã hết hạn")
-            val refreshToken = tokenStore.getRefreshToken()
+
+            // 1. Thử gọi API lấy thông tin người dùng với accessToken hiện tại
+            val userResponse = runCatching {
+                authApi.getUser("Bearer $accessToken")
+            }.getOrElse { error ->
+                // 2. Nếu thất bại và có refreshToken -> Thử Refresh Token
+                if (!refreshToken.isNullOrBlank()) {
+                    val refreshResponse = authApi.refreshToken(RefreshTokenRequest(refreshToken))
+                    val newAuthData = refreshResponse.data ?: throw error
+
+                    // Lưu accessToken mới nhận được
+                    accessToken = newAuthData.accessToken
+                    tokenStore.saveToken(
+                        accessToken = newAuthData.accessToken,
+                        refreshToken = newAuthData.refreshToken ?: refreshToken,
+                        userDto = null
+                    )
+
+                    // Gọi lại API getUser bằng accessToken mới
+                    authApi.getUser("Bearer $accessToken")
+                } else {
+                    throw error
+                }
+            }
+
+            val userDto =
+                userResponse.data ?: throw Exception("Không lấy được thông tin người dùng")
+
+            // Lưu thông tin user mới nhất vào DataStore
             tokenStore.saveToken(
-                accessToken = accessToken,
+                accessToken = accessToken!!,
                 refreshToken = refreshToken,
                 userDto = userDto
             )
             userDto
-        }
-            .onFailure {
+        }.recoverCatching { error ->
+            // 3. Xử lý ngoại lệ Mất mạng: Nếu có cached user sẵn trong DataStore thì vẫn giữ trạng thái Logged In
+            val cachedUser = tokenStore.getUser()
+            if (cachedUser != null) {
+                cachedUser
+            } else {
+                // 4. Chỉ xóa session khi cả 2 token đều không dùng được nữa
                 tokenStore.clearSession()
+                throw error
             }
+        }
     }
 }

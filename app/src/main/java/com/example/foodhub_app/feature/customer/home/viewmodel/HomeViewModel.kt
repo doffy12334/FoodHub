@@ -14,14 +14,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import javax.inject.Inject
 
 // Model dữ liệu chứa thông tin bàn ăn khi khách quét QR
+@Serializable
 data class HomeTableSession(
     val tableId: String,
     val tableName: String,
     val floor: String? = null,
     val capacity: Int? = null,
+    val tableToken: String = "",
+    val sessionId: String? = null,
+    val expiresAtEpochMillis: Long? = null,
     val isHost: Boolean = false,
 )
 
@@ -58,13 +63,23 @@ data class HomeUiState(
             .flatMap { it.items }
             .filter { query.isBlank() || it.name.contains(query.trim(), ignoreCase = true) }
             .filter { food -> maxPrice?.let { food.price <= it } ?: true }
+            .sortedByDescending { food ->
+                food.name.startsWith(query.trim(), ignoreCase = true) ||
+                        food.name.split(" ")
+                            .any { word ->
+                                word.startsWith(query.trim(), ignoreCase = true)
+                            }
+            }
 
     // Lấy danh sách 5 món ăn nổi bật hoặc bán chạy nhất
     val popularFoods: List<MenuFood>
         get() {
-            val available = categories.flatMap { it.items }.filter { it.available }
-            val featured = available.filter { it.isFeatured }.sortedByDescending { it.totalOrder }
-            return featured.ifEmpty { available.sortedByDescending { it.totalOrder } }.take(5)
+            val available = categories.flatMap { it.items }
+                .filter { it.available }
+            val featured = available.filter { it.isFeatured }
+                .sortedByDescending { it.totalOrder }
+            return featured.ifEmpty { available.sortedByDescending { it.totalOrder } }
+                .take(5)
         }
 }
 
@@ -90,6 +105,16 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
+        viewModelScope.launch {
+            tokenStore.tableSession.collect { tableSession ->
+                _uiState.update { current ->
+                    current.copy(
+                        tableSession = tableSession,
+                        selectedOrderType = if (tableSession != null) OrderType.DINE_IN else current.selectedOrderType
+                    )
+                }
+            }
+        }
         loadHomeData()
     }
 
@@ -100,12 +125,16 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         viewModelScope.launch {
             try {
-                val categories = foodRepository.getMenu().getOrThrow()
+                val categories = foodRepository.getMenu()
+                    .getOrThrow()
                 _uiState.update { it.copy(categories = categories) }
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
-                _uiState.update { it.copy(errorMessage = error.message ?: "Không thể tải dữ liệu trang chủ") }
+                _uiState.update {
+                    it.copy(
+                        errorMessage = error.message ?: "Không thể tải dữ liệu trang chủ")
+                }
             } finally {
                 loading = false
                 _uiState.update { it.copy(isLoading = false) }
@@ -114,13 +143,19 @@ class HomeViewModel @Inject constructor(
     }
 
     // Cập nhật từ khóa tìm kiếm món ăn
-    fun onQueryChange(query: String) { _uiState.update { it.copy(query = query) } }
+    fun onQueryChange(query: String) {
+        _uiState.update { it.copy(query = query) }
+    }
 
     // Chọn hoặc bỏ chọn danh mục món ăn để lọc
-    fun selectCategory(id: String?) { _uiState.update { it.copy(selectedCategoryId = id) } }
+    fun selectCategory(id: String?) {
+        _uiState.update { it.copy(selectedCategoryId = id) }
+    }
 
     // Thiết lập mức giá tối đa để lọc món ăn
-    fun selectMaxPrice(price: Long?) { _uiState.update { it.copy(maxPrice = price) } }
+    fun selectMaxPrice(price: Long?) {
+        _uiState.update { it.copy(maxPrice = price) }
+    }
 
     // Thay đổi hình thức đặt hàng (Tại bàn, Mang về, Giao tận nơi)
     fun selectOrderType(type: OrderType) {
@@ -131,17 +166,17 @@ class HomeViewModel @Inject constructor(
     }
 
     // Lưu thông tin bàn và chuyển sang hình thức ăn tại bàn sau khi quét QR
-    fun onQrScanned(scannedTableId: String, scannedTableName: String) {
-        _uiState.update {
-            it.copy(
-                tableSession = HomeTableSession(scannedTableId, scannedTableName),
-                selectedOrderType = OrderType.DINE_IN,
-            )
+    fun onQrScanned(session: HomeTableSession) {
+        viewModelScope.launch {
+            tokenStore.saveTableSession(session)
         }
     }
 
     // Xóa thông tin bàn ăn hiện tại và chuyển về hình thức mang về
     fun clearTableInfo() {
-        _uiState.update { it.copy(tableSession = null, selectedOrderType = OrderType.TAKEAWAY) }
+        viewModelScope.launch {
+            tokenStore.saveTableSession(null)
+            _uiState.update { it.copy(selectedOrderType = OrderType.TAKEAWAY) }
+        }
     }
 }
