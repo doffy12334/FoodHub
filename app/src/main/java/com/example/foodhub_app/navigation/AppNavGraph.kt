@@ -14,9 +14,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.foodhub_app.feature.customer.menu.ui.MenuRoute
 import com.example.foodhub_app.feature.customer.home.ui.HomeRoute
+import com.example.foodhub_app.feature.customer.home.viewmodel.HomeTableSession
+import com.example.foodhub_app.feature.customer.menu.ui.MenuRoute
 import com.example.foodhub_app.feature.customer.splash.ui.SplashRoute
+import com.example.foodhub_app.feature.customer.table.ui.QrScanRoute
 import com.example.foodhub_app.feature.shared.auth.ui.LoginRoute
 import com.example.foodhub_app.feature.shared.auth.ui.RegisterRoute
 
@@ -173,8 +175,21 @@ fun AppNavGraph(
 
         // Màn hình Quét QR Khách hàng
         composable<Screen.QrScan> {
-            Toast.makeText(context, "Màn hình Quét mã QR", Toast.LENGTH_SHORT)
-                .show()
+            QrScanRoute(
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onScanSuccess = { session ->
+                    Toast.makeText(context, "Đã kết nối ${session.tableName}", Toast.LENGTH_SHORT).show()
+                    val poppedHome = navController.popBackStack(Screen.Home, inclusive = false)
+                    if (!poppedHome) {
+                        navController.navigate(Screen.Home) {
+                            popUpTo(Screen.Login) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
         }
 
         // Màn hình Trang chủ Khách hàng (Home / Menu)
@@ -186,7 +201,7 @@ fun AppNavGraph(
                 onOrdersClick = { Toast.makeText(context, "Đơn hàng chưa được triển khai", Toast.LENGTH_SHORT).show() },
                 onProfileClick = { Toast.makeText(context, "Hồ sơ chưa được triển khai", Toast.LENGTH_SHORT).show() },
                 onLoginClick = { navController.navigate(Screen.Login) },
-                onQrClick = { Toast.makeText(context, "Quét QR chưa được triển khai", Toast.LENGTH_SHORT).show() },
+                onQrClick = { navController.navigate(Screen.QrScan) },
                 onChatClick = { Toast.makeText(context, "Tin nhắn chưa được triển khai", Toast.LENGTH_SHORT).show() },
                 onNotificationsClick = { Toast.makeText(context, "Thông báo chưa được triển khai", Toast.LENGTH_SHORT).show() },
             )

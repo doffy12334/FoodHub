@@ -27,6 +27,7 @@ class TokenStore @Inject constructor(
     private val accessTokenKey = stringPreferencesKey("access_token")
     private val refreshTokenKey = stringPreferencesKey("refresh_token")
     private val userKey = stringPreferencesKey("user")
+    private val tableSessionKey = stringPreferencesKey("table_session")
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -35,6 +36,22 @@ class TokenStore @Inject constructor(
             runCatching { json.decodeFromString<UserDto>(value) }.getOrNull()
         }
     }
+
+    val tableSession: Flow<com.example.foodhub_app.feature.customer.home.viewmodel.HomeTableSession?> =
+        context.authDatastore.data.map { preferences ->
+            preferences[tableSessionKey]?.let { value ->
+                runCatching { json.decodeFromString<com.example.foodhub_app.feature.customer.home.viewmodel.HomeTableSession>(value) }
+                    .getOrNull()
+                    ?.let { session ->
+                        val expiresAt = session.expiresAtEpochMillis
+                        if (expiresAt != null && System.currentTimeMillis() >= expiresAt) {
+                            null // Tự động loại bỏ phiên nếu đã quá hạn
+                        } else {
+                            session
+                        }
+                    }
+            }
+        }
 
     val accessToken: Flow<String?> = context.authDatastore.data.map { preferences ->
         preferences[accessTokenKey]
@@ -66,11 +83,24 @@ class TokenStore @Inject constructor(
     suspend fun getRefreshToken(): String? = refreshToken.first()
     suspend fun getUser(): UserDto? = user.first()
 
+    suspend fun saveTableSession(session: com.example.foodhub_app.feature.customer.home.viewmodel.HomeTableSession?) {
+        context.authDatastore.edit { preferences ->
+            if (session == null) {
+                preferences.remove(tableSessionKey)
+            } else {
+                preferences[tableSessionKey] = json.encodeToString(
+                    com.example.foodhub_app.feature.customer.home.viewmodel.HomeTableSession.serializer(), session
+                )
+            }
+        }
+    }
+
     suspend fun clearSession() {
         context.authDatastore.edit { preferences ->
             preferences.remove(accessTokenKey)
             preferences.remove(refreshTokenKey)
             preferences.remove(userKey)
+            preferences.remove(tableSessionKey)
         }
     }
 }

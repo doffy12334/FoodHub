@@ -1,6 +1,7 @@
 package com.example.foodhub_app.core.di
 
 import com.example.foodhub_app.feature.customer.menu.data.FoodApi
+import com.example.foodhub_app.feature.customer.table.data.TableApi
 import com.example.foodhub_app.feature.shared.auth.data.AuthApi
 import dagger.Module
 import dagger.Provides
@@ -65,4 +66,9 @@ object NetworkModule {
         return retrofit.create(FoodApi::class.java)
     }
 
+    @Provides
+    @Singleton
+    fun provideTableApi(retrofit: Retrofit) : TableApi{
+        return retrofit.create(TableApi::class.java)
+    }
 }

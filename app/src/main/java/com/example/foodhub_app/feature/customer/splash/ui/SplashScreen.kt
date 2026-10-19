@@ -39,6 +39,7 @@ fun SplashRoute(
     viewModel : SplashViewModel = hiltViewModel()
 ){
     val destination by viewModel.destination.collectAsStateWithLifecycle()
+
     LaunchedEffect(destination) {
         when(destination){
             SplashDestination.Home -> onNavigateToHome()
