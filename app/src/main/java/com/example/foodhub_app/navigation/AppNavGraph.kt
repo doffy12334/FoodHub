@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.foodhub_app.feature.customer.home.ui.HomeRoute
 import com.example.foodhub_app.feature.customer.home.viewmodel.HomeTableSession
+import com.example.foodhub_app.feature.customer.menu.ui.FoodDetailRoute
 import com.example.foodhub_app.feature.customer.menu.ui.MenuRoute
 import com.example.foodhub_app.feature.customer.splash.ui.SplashRoute
 import com.example.foodhub_app.feature.customer.table.ui.QrScanRoute
@@ -195,9 +196,9 @@ fun AppNavGraph(
         // Màn hình Trang chủ Khách hàng (Home / Menu)
         composable<Screen.Home> {
             HomeRoute(
-                onFoodClick = { Toast.makeText(context, "Chi tiết món chưa được triển khai", Toast.LENGTH_SHORT).show() },
+                onFoodClick = { foodId -> navController.navigate(Screen.FoodDetail(foodId)) },
                 onMenuClick = { navController.navigate(Screen.Menu) },
-                onCartClick = { Toast.makeText(context, "Giỏ hàng chưa được triển khai", Toast.LENGTH_SHORT).show() },
+                onCartClick = { navController.navigate(Screen.Cart) },
                 onOrdersClick = { Toast.makeText(context, "Đơn hàng chưa được triển khai", Toast.LENGTH_SHORT).show() },
                 onProfileClick = { Toast.makeText(context, "Hồ sơ chưa được triển khai", Toast.LENGTH_SHORT).show() },
                 onLoginClick = { navController.navigate(Screen.Login) },
@@ -209,9 +210,9 @@ fun AppNavGraph(
 
         composable<Screen.Menu> {
             MenuRoute(
-                onFoodClick = { Toast.makeText(context, "Chi tiết món chưa được triển khai", Toast.LENGTH_SHORT).show() },
+                onFoodClick = { foodId -> navController.navigate(Screen.FoodDetail(foodId)) },
                 onBackClick = { navController.popBackStack() },
-                onCartClick = { Toast.makeText(context, "Giỏ hàng chưa được triển khai", Toast.LENGTH_SHORT).show() },
+                onCartClick = { navController.navigate(Screen.Cart) },
             )
         }
 
@@ -223,8 +224,12 @@ fun AppNavGraph(
 
         // Màn hình Chi tiết Món ăn
         composable<Screen.FoodDetail> {
-            Toast.makeText(context, "Màn hình Chi tiết món ăn", Toast.LENGTH_SHORT)
-                .show()
+            FoodDetailRoute(
+                onBackClick = { navController.popBackStack() },
+                onLoginClick = { navController.navigate(Screen.Login) },
+                onCartClick = { navController.navigate(Screen.Cart) },
+                onScanQrClick = { navController.navigate(Screen.QrScan) }
+            )
         }
 
         // Màn hình Admin (Admin Dashboard)

@@ -1,5 +1,7 @@
 package com.example.foodhub_app.core.di
 
+import com.example.foodhub_app.core.network.TokenAuthenticator
+import com.example.foodhub_app.feature.customer.cart.data.CartApi
 import com.example.foodhub_app.feature.customer.menu.data.FoodApi
 import com.example.foodhub_app.feature.customer.table.data.TableApi
 import com.example.foodhub_app.feature.shared.auth.data.AuthApi
@@ -13,6 +15,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 
@@ -31,22 +34,38 @@ object NetworkModule {
         }
     }
 
+
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideLoggingInterceptor() : HttpLoggingInterceptor{
+        return HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+    }
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(
+        loggingInterceptor: HttpLoggingInterceptor,
+        authenticator: TokenAuthenticator
+    ): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-            })
+            .addInterceptor(loggingInterceptor)
+            .authenticator (authenticator)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
             .build()
     }
 
     @Provides
     @Singleton
     fun provideRetrofit(
-        json: Json,
         okHttpClient: OkHttpClient
     ): Retrofit {
+        val json = Json{
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+        }
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClient)
@@ -71,4 +90,11 @@ object NetworkModule {
     fun provideTableApi(retrofit: Retrofit) : TableApi{
         return retrofit.create(TableApi::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideCartApi(retrofit: Retrofit) : CartApi{
+        return retrofit.create(CartApi :: class.java)
+    }
+
 }

@@ -4,10 +4,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class MenuCategoryDto(
-    val id: String,
-    val name: String,
-    val icon: String?,
-    val isActive: Boolean,
-    val sortOrder: Int,
-    val items: List<FoodDto>
+    val id: String = "",
+    val name: String = "",
+    val icon: String? = null,
+    val isActive: Boolean = true,
+    val sortOrder: Int = 0,
+    val items: List<FoodDto> = emptyList()
 )
