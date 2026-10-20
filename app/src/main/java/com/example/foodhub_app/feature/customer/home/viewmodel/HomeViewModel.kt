@@ -59,6 +59,7 @@ data class HomeUiState(
     // Lấy danh sách món ăn hiển thị sau khi áp dụng các bộ lọc tìm kiếm
     val visibleFoods: List<MenuFood>
         get() = categories
+            .asSequence()
             .filter { selectedCategoryId == null || it.id == selectedCategoryId }
             .flatMap { it.items }
             .filter { query.isBlank() || it.name.contains(query.trim(), ignoreCase = true) }
@@ -70,6 +71,7 @@ data class HomeUiState(
                                 word.startsWith(query.trim(), ignoreCase = true)
                             }
             }
+            .toList()
 
     // Lấy danh sách 5 món ăn nổi bật hoặc bán chạy nhất
     val popularFoods: List<MenuFood>

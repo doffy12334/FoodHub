@@ -34,5 +34,7 @@ data class FoodDetail(
     val available: Boolean = true,
     val groups: List<FoodOptionGroup> = emptyList(),
     val imageUrl: String? = null,
-    val salePrice: Long? = null
+    val salePrice: Long? = null,
+    val isBestSeller: Boolean = false,
+    val totalOrder: Int = 0
 )

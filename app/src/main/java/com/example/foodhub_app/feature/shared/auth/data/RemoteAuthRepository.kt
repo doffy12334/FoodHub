@@ -1,8 +1,6 @@
 package com.example.foodhub_app.feature.shared.auth.data
 
 import com.example.foodhub_app.core.datastore.TokenStore
-import com.example.foodhub_app.core.network.ApiResponse
-import com.example.foodhub_app.feature.shared.auth.model.AuthData
 import com.example.foodhub_app.feature.shared.auth.model.LoginRequest
 import com.example.foodhub_app.feature.shared.auth.model.RefreshTokenRequest
 import com.example.foodhub_app.feature.shared.auth.model.RegisterRequest
@@ -80,9 +78,10 @@ class RemoteAuthRepository @Inject constructor(
 
                     // Lưu accessToken mới nhận được
                     accessToken = newAuthData.accessToken
+                    val newRefreshToken = newAuthData.refreshToken ?: refreshToken
                     tokenStore.saveToken(
                         accessToken = newAuthData.accessToken,
-                        refreshToken = newAuthData.refreshToken ?: refreshToken,
+                        refreshToken = newRefreshToken,
                         userDto = null
                     )
 
@@ -99,17 +98,19 @@ class RemoteAuthRepository @Inject constructor(
             // Lưu thông tin user mới nhất vào DataStore
             tokenStore.saveToken(
                 accessToken = accessToken!!,
-                refreshToken = refreshToken,
+                refreshToken = tokenStore.getRefreshToken(),
                 userDto = userDto
             )
             userDto
         }.recoverCatching { error ->
             // 3. Xử lý ngoại lệ Mất mạng: Nếu có cached user sẵn trong DataStore thì vẫn giữ trạng thái Logged In
+            val isNetworkError = error is java.io.IOException
             val cachedUser = tokenStore.getUser()
-            if (cachedUser != null) {
+
+            if (isNetworkError && cachedUser != null) {
                 cachedUser
             } else {
-                // 4. Chỉ xóa session khi cả 2 token đều không dùng được nữa
+                // 4. Lỗi xác thực/ token không dùng được -> Xoá session
                 tokenStore.clearSession()
                 throw error
             }
